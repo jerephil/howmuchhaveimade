@@ -111,6 +111,9 @@ const HowMuchHaveIMade = () => {
             earned since starting timer
           </div>
         </div>
+        <div className="text-center text-sm mt-6">
+          a <a href="https://rytavi.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">rytāvi corp</a> service
+        </div>
       </div>
     </div>
   );
