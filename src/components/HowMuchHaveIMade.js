@@ -112,7 +112,7 @@ const HowMuchHaveIMade = () => {
           </div>
         </div>
         <div className="text-center text-sm mt-6 text-black">
-          a <a href="https://rytavi.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">rytāvi corp</a> service
+          made by <a href="https://jeremywphillips.com" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">jeremy</a> | connect with me on <a href="https://x.com/jerephil" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">x</a>
         </div>
       </div>
     </div>
