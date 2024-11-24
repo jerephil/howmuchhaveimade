@@ -27,19 +27,23 @@ export const metadata = {
     description: 'Track your earnings in real-time based on your annual salary. A rytāvi corp service.'
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-    other: {
-      rel: 'apple-touch-icon-precomposed',
-      url: '/apple-touch-icon.png',
-    },
-  },
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png' }
+    ]
+  }
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
