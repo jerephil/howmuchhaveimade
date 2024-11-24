@@ -25,7 +25,16 @@ export const metadata = {
     card: 'summary',
     title: 'How Much Have I Made?',
     description: 'Track your earnings in real-time based on your annual salary. A rytāvi corp service.'
-  }
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+    other: {
+      rel: 'apple-touch-icon-precomposed',
+      url: '/apple-touch-icon.png',
+    },
+  },
 };
 
 export default function RootLayout({ children }) {
