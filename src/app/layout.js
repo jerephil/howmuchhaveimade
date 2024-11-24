@@ -16,16 +16,16 @@ const geistMono = localFont({
 
 export const metadata = {
   title: 'How Much Have I Made?',
-  description: 'Track your earnings in real-time based on your annual salary. A rytāvi corp service.',
+  description: 'Track your earnings in real-time based on your annual salary.',
   openGraph: {
     title: 'How Much Have I Made?',
-    description: 'Track your earnings in real-time based on your annual salary. A rytāvi corp service.',
+    description: 'Track your earnings in real-time based on your annual salary.',
     type: 'website'
   },
   twitter: {
     card: 'summary',
     title: 'How Much Have I Made?',
-    description: 'Track your earnings in real-time based on your annual salary. A rytāvi corp service.'
+    description: 'Track your earnings in real-time based on your annual salary.'
   },
   icons: {
     icon: [
