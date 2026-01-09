@@ -17,8 +17,9 @@ const HowMuchHaveIMade = () => {
   const [goal, setGoal] = useState('');
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastCelebratedAmount, setLastCelebratedAmount] = useState(0);
+  const [inputMode, setInputMode] = useState('annual'); // 'annual' or 'hourly'
 
-  // Load salary, dark mode, and goal from localStorage on mount
+  // Load salary, dark mode, goal, and input mode from localStorage on mount
   useEffect(() => {
     const savedSalary = localStorage.getItem('annualSalary');
     if (savedSalary) {
@@ -33,6 +34,11 @@ const HowMuchHaveIMade = () => {
     const savedGoal = localStorage.getItem('earningsGoal');
     if (savedGoal) {
       setGoal(savedGoal);
+    }
+
+    const savedInputMode = localStorage.getItem('inputMode');
+    if (savedInputMode) {
+      setInputMode(savedInputMode);
     }
   }, []);
 
@@ -54,6 +60,11 @@ const HowMuchHaveIMade = () => {
       localStorage.setItem('earningsGoal', goal);
     }
   }, [goal]);
+
+  // Save input mode
+  useEffect(() => {
+    localStorage.setItem('inputMode', inputMode);
+  }, [inputMode]);
 
   // Check if goal reached and celebrate milestones
   useEffect(() => {
@@ -133,7 +144,17 @@ const HowMuchHaveIMade = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, salary]);
+
+  const getAnnualSalary = () => {
+    const salaryNum = Number(salary);
+    if (inputMode === 'hourly') {
+      // Convert hourly to annual: hourly * 8 hours * 260 days
+      return salaryNum * 8 * 260;
+    }
+    return salaryNum;
+  };
 
   const calculateEarningsPerMinute = (annualSalary) => {
     const workingDaysPerYear = 260;
@@ -183,7 +204,8 @@ const HowMuchHaveIMade = () => {
         const currentSessionTime = Date.now() - startTime;
         const totalElapsedTime = elapsedTime + currentSessionTime;
         const minutesElapsed = totalElapsedTime / 60000;
-        const earningsPerMinute = calculateEarningsPerMinute(Number(salary));
+        const annualSalary = getAnnualSalary();
+        const earningsPerMinute = calculateEarningsPerMinute(annualSalary);
         const currentEarnings = minutesElapsed * earningsPerMinute;
         setEarnings(currentEarnings);
         document.title = `$${formatCurrency(currentEarnings)} - How Much Have I Made?`;
@@ -262,12 +284,27 @@ const HowMuchHaveIMade = () => {
         </div>
       <div className="space-y-4">
         <div>
-          <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-black'}`}>Annual Salary ($)</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-black'}`}>
+              {inputMode === 'annual' ? 'Annual Salary ($)' : 'Hourly Rate ($)'}
+            </label>
+            <button
+              onClick={() => setInputMode(inputMode === 'annual' ? 'hourly' : 'annual')}
+              disabled={isRunning}
+              className={`text-xs px-2 py-1 rounded ${
+                darkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              } ${isRunning ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              Switch to {inputMode === 'annual' ? 'Hourly' : 'Annual'}
+            </button>
+          </div>
           <input
             type="number"
             value={salary}
             onChange={(e) => setSalary(e.target.value)}
-            placeholder="Enter your annual salary"
+            placeholder={inputMode === 'annual' ? 'Enter your annual salary' : 'Enter your hourly rate'}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               darkMode
                 ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
@@ -316,19 +353,19 @@ const HowMuchHaveIMade = () => {
             <div className={`rounded-md p-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <div className={`text-xs mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Per Minute</div>
               <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
-                ${formatCurrency(calculateEarningsPerMinute(Number(salary)))}
+                ${formatCurrency(calculateEarningsPerMinute(getAnnualSalary()))}
               </div>
             </div>
             <div className={`rounded-md p-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <div className={`text-xs mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Hourly</div>
               <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
-                ${formatCurrency(calculateHourlyRate(Number(salary)))}
+                ${formatCurrency(calculateHourlyRate(getAnnualSalary()))}
               </div>
             </div>
             <div className={`rounded-md p-3 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <div className={`text-xs mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Daily Target</div>
               <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
-                ${formatCurrency(calculateDailyTarget(Number(salary)))}
+                ${formatCurrency(calculateDailyTarget(getAnnualSalary()))}
               </div>
             </div>
           </div>
