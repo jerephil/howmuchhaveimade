@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { PlayCircle, PauseCircle, RotateCcw, Moon, Sun, Keyboard } from 'lucide-react';
+import { PlayCircle, PauseCircle, RotateCcw, Moon, Sun, Keyboard, Settings, Coffee, Share2, History } from 'lucide-react';
 
 const HowMuchHaveIMade = () => {
   const [salary, setSalary] = useState('');
@@ -20,12 +20,28 @@ const HowMuchHaveIMade = () => {
   const [inputMode, setInputMode] = useState('annual'); // 'annual' or 'hourly'
   const [showShortcuts, setShowShortcuts] = useState(false);
 
-  // Load salary, dark mode, goal, and input mode from localStorage on mount
+  // Custom work schedule
+  const [hoursPerDay, setHoursPerDay] = useState(8);
+  const [daysPerWeek, setDaysPerWeek] = useState(5);
+  const [weeksPerYear, setWeeksPerYear] = useState(52);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Break tracking
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [breakStartTime, setBreakStartTime] = useState(null);
+  const [totalBreakTime, setTotalBreakTime] = useState(0);
+
+  // Session history
+  const [sessions, setSessions] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Share feature
+  const [showShare, setShowShare] = useState(false);
+
+  // Load all settings from localStorage on mount
   useEffect(() => {
     const savedSalary = localStorage.getItem('annualSalary');
-    if (savedSalary) {
-      setSalary(savedSalary);
-    }
+    if (savedSalary) setSalary(savedSalary);
 
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode === 'true') {
@@ -34,13 +50,27 @@ const HowMuchHaveIMade = () => {
     }
 
     const savedGoal = localStorage.getItem('earningsGoal');
-    if (savedGoal) {
-      setGoal(savedGoal);
-    }
+    if (savedGoal) setGoal(savedGoal);
 
     const savedInputMode = localStorage.getItem('inputMode');
-    if (savedInputMode) {
-      setInputMode(savedInputMode);
+    if (savedInputMode) setInputMode(savedInputMode);
+
+    const savedHoursPerDay = localStorage.getItem('hoursPerDay');
+    if (savedHoursPerDay) setHoursPerDay(Number(savedHoursPerDay));
+
+    const savedDaysPerWeek = localStorage.getItem('daysPerWeek');
+    if (savedDaysPerWeek) setDaysPerWeek(Number(savedDaysPerWeek));
+
+    const savedWeeksPerYear = localStorage.getItem('weeksPerYear');
+    if (savedWeeksPerYear) setWeeksPerYear(Number(savedWeeksPerYear));
+
+    const savedSessions = localStorage.getItem('sessions');
+    if (savedSessions) {
+      try {
+        setSessions(JSON.parse(savedSessions));
+      } catch (e) {
+        console.error('Failed to parse sessions', e);
+      }
     }
   }, []);
 
@@ -72,6 +102,24 @@ const HowMuchHaveIMade = () => {
   useEffect(() => {
     localStorage.setItem('inputMode', inputMode);
   }, [inputMode]);
+
+  // Save work schedule settings
+  useEffect(() => {
+    localStorage.setItem('hoursPerDay', hoursPerDay.toString());
+  }, [hoursPerDay]);
+
+  useEffect(() => {
+    localStorage.setItem('daysPerWeek', daysPerWeek.toString());
+  }, [daysPerWeek]);
+
+  useEffect(() => {
+    localStorage.setItem('weeksPerYear', weeksPerYear.toString());
+  }, [weeksPerYear]);
+
+  // Save sessions
+  useEffect(() => {
+    localStorage.setItem('sessions', JSON.stringify(sessions));
+  }, [sessions]);
 
   // Check if goal reached and celebrate milestones
   useEffect(() => {
@@ -157,16 +205,15 @@ const HowMuchHaveIMade = () => {
   const getAnnualSalary = () => {
     const salaryNum = Number(salary);
     if (inputMode === 'hourly') {
-      // Convert hourly to annual: hourly * 8 hours * 260 days
-      return salaryNum * 8 * 260;
+      // Convert hourly to annual using custom schedule
+      const hoursPerYear = hoursPerDay * daysPerWeek * weeksPerYear;
+      return salaryNum * hoursPerYear;
     }
     return salaryNum;
   };
 
   const calculateEarningsPerMinute = (annualSalary) => {
-    const workingDaysPerYear = 260;
-    const workingHoursPerDay = 8;
-    const minutesPerYear = workingDaysPerYear * workingHoursPerDay * 60;
+    const minutesPerYear = hoursPerDay * daysPerWeek * weeksPerYear * 60;
     return annualSalary / minutesPerYear;
   };
 
@@ -178,15 +225,13 @@ const HowMuchHaveIMade = () => {
   };
 
   const calculateHourlyRate = (annualSalary) => {
-    const workingDaysPerYear = 260;
-    const workingHoursPerDay = 8;
-    const hoursPerYear = workingDaysPerYear * workingHoursPerDay;
+    const hoursPerYear = hoursPerDay * daysPerWeek * weeksPerYear;
     return annualSalary / hoursPerYear;
   };
 
   const calculateDailyTarget = (annualSalary) => {
-    const workingDaysPerYear = 260;
-    return annualSalary / workingDaysPerYear;
+    const daysPerYear = daysPerWeek * weeksPerYear;
+    return annualSalary / daysPerYear;
   };
 
   const formatTime = (milliseconds) => {
@@ -249,10 +294,24 @@ const HowMuchHaveIMade = () => {
   };
 
   const handleReset = () => {
-    // Show summary if there were any earnings
+    // Save session to history if there were any earnings
     if (earnings > 0 || elapsedTime > 0) {
       const currentSessionTime = startTime ? Date.now() - startTime : 0;
       const totalTime = elapsedTime + currentSessionTime;
+
+      const newSession = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        earnings: earnings,
+        workTime: totalTime - totalBreakTime,
+        breakTime: totalBreakTime,
+        totalTime: totalTime,
+        salary: Number(salary),
+        inputMode: inputMode
+      };
+
+      setSessions([newSession, ...sessions]);
+
       setSessionSummary({
         earnings: earnings,
         time: totalTime
@@ -265,6 +324,9 @@ const HowMuchHaveIMade = () => {
     setDisplayedEarnings(0);
     setStartTime(null);
     setElapsedTime(0);
+    setTotalBreakTime(0);
+    setIsOnBreak(false);
+    setBreakStartTime(null);
     setLastCelebratedAmount(0);
     document.title = originalTitle;
   };
@@ -277,27 +339,138 @@ const HowMuchHaveIMade = () => {
     setDarkMode(!darkMode);
   };
 
+  const handleBreakToggle = () => {
+    if (isOnBreak) {
+      // End break
+      if (breakStartTime) {
+        const breakDuration = Date.now() - breakStartTime;
+        setTotalBreakTime(totalBreakTime + breakDuration);
+      }
+      setIsOnBreak(false);
+      setBreakStartTime(null);
+    } else {
+      // Start break
+      setIsOnBreak(true);
+      setBreakStartTime(Date.now());
+    }
+  };
+
+  const applySchedulePreset = (preset) => {
+    switch(preset) {
+      case 'fulltime':
+        setHoursPerDay(8);
+        setDaysPerWeek(5);
+        setWeeksPerYear(52);
+        break;
+      case 'parttime':
+        setHoursPerDay(4);
+        setDaysPerWeek(5);
+        setWeeksPerYear(52);
+        break;
+      case 'contractor':
+        setHoursPerDay(6);
+        setDaysPerWeek(4);
+        setWeeksPerYear(50);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const clearHistory = () => {
+    if (confirm('Are you sure you want to clear all session history?')) {
+      setSessions([]);
+      setShowHistory(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Date', 'Earnings', 'Work Time', 'Break Time', 'Total Time', 'Salary', 'Mode'];
+    const rows = sessions.map(s => [
+      new Date(s.date).toLocaleString(),
+      s.earnings.toFixed(2),
+      formatTime(s.workTime),
+      formatTime(s.breakTime),
+      formatTime(s.totalTime),
+      s.salary,
+      s.inputMode
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `earnings-history-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleShare = async () => {
+    const shareText = `💰 I earned $${formatCurrency(earnings)} in ${formatTime(elapsedTime + (startTime ? Date.now() - startTime : 0))}!\n\nTrack your earnings at howmuchhaveimade.com`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'How Much Have I Made?',
+          text: shareText,
+          url: window.location.href
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          // Fallback to copy to clipboard
+          navigator.clipboard.writeText(shareText);
+          alert('Copied to clipboard!');
+        }
+      }
+    } else {
+      // Fallback to copy to clipboard
+      navigator.clipboard.writeText(shareText);
+      alert('Copied to clipboard!');
+    }
+  };
+
   return (
     <>
       <div className={`w-full max-w-md mx-auto rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="text-center mb-6 flex items-center justify-center gap-2">
-          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>How Much Have I Made?</h2>
-          <button
-            onClick={() => setShowShortcuts(true)}
-            className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
-            aria-label="Keyboard shortcuts"
-            title="Keyboard shortcuts"
-          >
-            <Keyboard className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-          </button>
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
-            aria-label="Toggle dark mode"
-            title="Toggle dark mode"
-          >
-            {darkMode ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-gray-700" />}
-          </button>
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>How Much Have I Made?</h2>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+              aria-label="Work schedule settings"
+              title="Work schedule settings"
+            >
+              <Settings className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+              aria-label="Session history"
+              title="Session history"
+            >
+              <History className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            </button>
+            <button
+              onClick={() => setShowShortcuts(true)}
+              className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts"
+            >
+              <Keyboard className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            </button>
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+              aria-label="Toggle dark mode"
+              title="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-gray-700" />}
+            </button>
+          </div>
         </div>
       <div className="space-y-4">
         <div>
@@ -387,36 +560,60 @@ const HowMuchHaveIMade = () => {
             </div>
           </div>
         )}
-        <div className="flex justify-center space-x-2">
-          {!isRunning ? (
-            <button 
-              onClick={handleStart}
-              disabled={!salary || isNaN(Number(salary))}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <PlayCircle className="w-4 h-4" />
-              <span>Start</span>
-            </button>
-          ) : (
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-center space-x-2">
+            {!isRunning ? (
+              <button
+                onClick={handleStart}
+                disabled={!salary || isNaN(Number(salary))}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <PlayCircle className="w-4 h-4" />
+                <span>Start</span>
+              </button>
+            ) : (
+              <button
+                onClick={handlePause}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ring-2 ring-blue-300 ring-opacity-50 animate-pulse"
+              >
+                <PauseCircle className="w-4 h-4" />
+                <span>Pause</span>
+              </button>
+            )}
+            {isRunning && (
+              <button
+                onClick={handleBreakToggle}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+                  isOnBreak
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                }`}
+              >
+                <Coffee className="w-4 h-4" />
+                <span>{isOnBreak ? 'End Break' : 'Break'}</span>
+              </button>
+            )}
             <button
-              onClick={handlePause}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ring-2 ring-blue-300 ring-opacity-50 animate-pulse"
+              onClick={handleReset}
+              className={`flex items-center space-x-2 px-4 py-2 border rounded-md ${
+                darkMode
+                  ? 'border-gray-600 hover:bg-gray-700 text-white'
+                  : 'border-gray-300 hover:bg-gray-50 text-black'
+              }`}
             >
-              <PauseCircle className="w-4 h-4" />
-              <span>Pause</span>
+              <RotateCcw className="w-4 h-4" />
+              <span>Reset</span>
+            </button>
+          </div>
+          {(earnings > 0 || elapsedTime > 0) && (
+            <button
+              onClick={handleShare}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-md hover:from-purple-600 hover:to-pink-600"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>Share Stats</span>
             </button>
           )}
-          <button
-            onClick={handleReset}
-            className={`flex items-center space-x-2 px-4 py-2 border rounded-md ${
-              darkMode
-                ? 'border-gray-600 hover:bg-gray-700 text-white'
-                : 'border-gray-300 hover:bg-gray-50 text-black'
-            }`}
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Reset</span>
-          </button>
         </div>
         <div className="text-center space-y-2">
           <div className={`text-3xl font-bold transition-all ${
@@ -439,7 +636,10 @@ const HowMuchHaveIMade = () => {
           </div>
           {(isRunning || elapsedTime > 0) && (
             <div className={`text-lg font-medium mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              ⏱️ {formatTime(elapsedTime + (startTime ? Date.now() - startTime : 0))}
+              <div>⏱️ Working: {formatTime(elapsedTime + (startTime ? Date.now() - startTime : 0) - totalBreakTime - (isOnBreak && breakStartTime ? Date.now() - breakStartTime : 0))}</div>
+              {(totalBreakTime > 0 || isOnBreak) && (
+                <div className="text-sm">☕ Break: {formatTime(totalBreakTime + (isOnBreak && breakStartTime ? Date.now() - breakStartTime : 0))}</div>
+              )}
             </div>
           )}
         </div>
@@ -521,6 +721,165 @@ const HowMuchHaveIMade = () => {
             className="w-full mt-6 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium"
           >
             Got it!
+          </button>
+        </div>
+      </div>
+    )}
+
+    {/* Settings Modal */}
+    {showSettings && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={() => setShowSettings(false)}>
+        <div className={`rounded-lg shadow-xl p-6 max-w-md w-full my-8 ${darkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={(e) => e.stopPropagation()}>
+          <h3 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>⚙️ Work Schedule</h3>
+
+          <div className="space-y-4 mb-6">
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => applySchedulePreset('fulltime')} className="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">Full-time (40h)</button>
+              <button onClick={() => applySchedulePreset('parttime')} className="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">Part-time (20h)</button>
+              <button onClick={() => applySchedulePreset('contractor')} className="px-3 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">Contractor</button>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-black'}`}>Hours per Day</label>
+              <input
+                type="number"
+                value={hoursPerDay}
+                onChange={(e) => setHoursPerDay(Number(e.target.value))}
+                min="1"
+                max="24"
+                className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-black'}`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-black'}`}>Days per Week</label>
+              <input
+                type="number"
+                value={daysPerWeek}
+                onChange={(e) => setDaysPerWeek(Number(e.target.value))}
+                min="1"
+                max="7"
+                className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-black'}`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-black'}`}>Weeks per Year</label>
+              <input
+                type="number"
+                value={weeksPerYear}
+                onChange={(e) => setWeeksPerYear(Number(e.target.value))}
+                min="1"
+                max="52"
+                className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-black'}`}
+              />
+            </div>
+
+            <div className={`text-sm p-3 rounded ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
+              Total: {hoursPerDay * daysPerWeek * weeksPerYear} hours/year ({hoursPerDay * daysPerWeek} hours/week)
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowSettings(false)}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    )}
+
+    {/* History Modal */}
+    {showHistory && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={() => setShowHistory(false)}>
+        <div className={`rounded-lg shadow-xl p-6 max-w-2xl w-full my-8 ${darkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={(e) => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>📊 Session History</h3>
+            <div className="flex gap-2">
+              {sessions.length > 0 && (
+                <>
+                  <button
+                    onClick={exportToCSV}
+                    className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={clearHistory}
+                    className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {sessions.length === 0 ? (
+            <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              No sessions yet. Start tracking to build your history!
+            </div>
+          ) : (
+            <>
+              <div className={`grid grid-cols-3 gap-4 mb-4 p-4 rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
+                    ${formatCurrency(sessions.reduce((sum, s) => sum + s.earnings, 0))}
+                  </div>
+                  <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Earnings</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {sessions.length}
+                  </div>
+                  <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Sessions</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
+                    {formatTime(sessions.reduce((sum, s) => sum + s.workTime, 0))}
+                  </div>
+                  <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Work Time</div>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={`p-3 rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className={`font-semibold ${darkMode ? 'text-white' : 'text-black'}`}>
+                          ${formatCurrency(session.earnings)}
+                        </div>
+                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {new Date(session.date).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="text-right text-sm">
+                        <div className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
+                          ⏱️ {formatTime(session.workTime)}
+                        </div>
+                        {session.breakTime > 0 && (
+                          <div className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                            ☕ {formatTime(session.breakTime)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <button
+            onClick={() => setShowHistory(false)}
+            className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium"
+          >
+            Close
           </button>
         </div>
       </div>
