@@ -1,4 +1,4 @@
-import HowMuchHaveIMade from "../components/HowMuchHaveIMade";
+import HowMuchHaveIMade from "@/components/HowMuchHaveIMade";
 
 export default function Home() {
   return (
