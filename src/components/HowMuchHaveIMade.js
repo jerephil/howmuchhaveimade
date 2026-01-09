@@ -216,7 +216,8 @@ const HowMuchHaveIMade = () => {
         clearInterval(intervalId);
       }
     };
-  }, [isRunning, startTime, salary, elapsedTime]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, startTime, salary, elapsedTime, inputMode]);
 
   useEffect(() => {
     document.title = originalTitle;
