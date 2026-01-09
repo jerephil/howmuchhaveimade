@@ -1,0 +1,25 @@
+{
+  "name": "How Much Have I Made?",
+  "short_name": "Earnings Tracker",
+  "description": "Track your earnings in real-time. See exactly how much money you make per minute, hour, and day.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "finance", "utilities"],
+  "screenshots": []
+}

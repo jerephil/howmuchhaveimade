@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { PlayCircle, PauseCircle, RotateCcw, Moon, Sun } from 'lucide-react';
+import { PlayCircle, PauseCircle, RotateCcw, Moon, Sun, Keyboard } from 'lucide-react';
 
 const HowMuchHaveIMade = () => {
   const [salary, setSalary] = useState('');
@@ -18,6 +18,7 @@ const HowMuchHaveIMade = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastCelebratedAmount, setLastCelebratedAmount] = useState(0);
   const [inputMode, setInputMode] = useState('annual'); // 'annual' or 'hourly'
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   // Load salary, dark mode, goal, and input mode from localStorage on mount
   useEffect(() => {
@@ -279,12 +280,21 @@ const HowMuchHaveIMade = () => {
   return (
     <>
       <div className={`w-full max-w-md mx-auto rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="text-center mb-6 flex items-center justify-center gap-3">
+        <div className="text-center mb-6 flex items-center justify-center gap-2">
           <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>How Much Have I Made?</h2>
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts"
+          >
+            <Keyboard className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+          </button>
           <button
             onClick={toggleDarkMode}
             className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
             aria-label="Toggle dark mode"
+            title="Toggle dark mode"
           >
             {darkMode ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-gray-700" />}
           </button>
@@ -388,9 +398,9 @@ const HowMuchHaveIMade = () => {
               <span>Start</span>
             </button>
           ) : (
-            <button 
+            <button
               onClick={handlePause}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 ring-2 ring-blue-300 ring-opacity-50 animate-pulse"
             >
               <PauseCircle className="w-4 h-4" />
               <span>Pause</span>
@@ -409,11 +419,23 @@ const HowMuchHaveIMade = () => {
           </button>
         </div>
         <div className="text-center space-y-2">
-          <div className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
+          <div className={`text-3xl font-bold transition-all ${
+            isRunning ? 'animate-pulse-glow text-green-600 dark:text-green-400' : darkMode ? 'text-white' : 'text-black'
+          }`}>
             ${formatCurrency(displayedEarnings)}
           </div>
           <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-black'}`}>
-            earned since starting timer
+            {isRunning ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                earning now...
+              </span>
+            ) : (
+              'earned since starting timer'
+            )}
           </div>
           {(isRunning || elapsedTime > 0) && (
             <div className={`text-lg font-medium mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -469,6 +491,37 @@ const HowMuchHaveIMade = () => {
             </div>
             <div className="text-white font-medium">Milestone Reached!</div>
           </div>
+        </div>
+      </div>
+    )}
+
+    {/* Keyboard Shortcuts Modal */}
+    {showShortcuts && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowShortcuts(false)}>
+        <div className={`rounded-lg shadow-xl p-6 max-w-sm w-full ${darkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={(e) => e.stopPropagation()}>
+          <div className="text-center mb-4">
+            <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>⌨️ Keyboard Shortcuts</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <kbd className={`px-3 py-1 rounded text-sm font-mono ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>Space</kbd>
+              <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Start / Pause</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <kbd className={`px-3 py-1 rounded text-sm font-mono ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>R</kbd>
+              <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Reset</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <kbd className={`px-3 py-1 rounded text-sm font-mono ${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>Esc</kbd>
+              <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Pause</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowShortcuts(false)}
+            className="w-full mt-6 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium"
+          >
+            Got it!
+          </button>
         </div>
       </div>
     )}
