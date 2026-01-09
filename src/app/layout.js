@@ -17,6 +17,12 @@ const geistMono = localFont({
 export const metadata = {
   title: 'How Much Have I Made? - Real-Time Earnings Tracker',
   description: 'Track your earnings in real-time. See exactly how much money you make per minute, hour, and day. Perfect for freelancers, contractors, and anyone curious about their hourly value.',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   keywords: ['earnings tracker', 'salary calculator', 'hourly rate', 'income tracker', 'money counter', 'wage calculator', 'freelance earnings'],
   authors: [{ name: 'Alchemy Risen', url: 'https://alchemyrisen.com' }],
   creator: 'Alchemy Risen',
