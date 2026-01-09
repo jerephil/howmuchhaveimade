@@ -29,6 +29,7 @@ const HowMuchHaveIMade = () => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode === 'true') {
       setDarkMode(true);
+      document.documentElement.classList.add('dark');
     }
 
     const savedGoal = localStorage.getItem('earningsGoal');
@@ -49,9 +50,14 @@ const HowMuchHaveIMade = () => {
     }
   }, [salary]);
 
-  // Save dark mode preference
+  // Save dark mode preference and apply to document
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode.toString());
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [darkMode]);
 
   // Save goal
